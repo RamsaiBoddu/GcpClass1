@@ -60,28 +60,25 @@
     <script type="module">
         // Import Firebase functions
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-analytics.js";
         import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut as firebaseSignOut } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
         import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-storage.js";
 
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
-  import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-analytics.js";
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyADUJRPpBY_INeedjNca4M-rFNCmHg7fS0",
-    authDomain: "ramsai-66acc.firebaseapp.com",
-    projectId: "ramsai-66acc",
-    storageBucket: "ramsai-66acc.appspot.com",
-    messagingSenderId: "251871275778",
-    appId: "1:251871275778:web:2873865ab019707f41b01b",
-    measurementId: "G-FECKENWYTH"
-  };
-
-  
-
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyADUJRPpBY_INeedjNca4M-rFNCmHg7fS0",
+            authDomain: "ramsai-66acc.firebaseapp.com",
+            projectId: "ramsai-66acc",
+            storageBucket: "ramsai-66acc.appspot.com",
+            messagingSenderId: "251871275778",
+            appId: "1:251871275778:web:2873865ab019707f41b01b",
+            measurementId: "G-FECKENWYTH"
+        };
 
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
         const auth = getAuth(app);
         const storage = getStorage(app);
         const db = getFirestore(app);
@@ -95,25 +92,24 @@
         const imagesContainer = document.getElementById('images-container');
         const progressBar = document.getElementById('progress-bar').firstElementChild;
 
-        // Google sign-in
-        function signInWithGoogle() {
+        // Function to sign in with Google
+        async function signInWithGoogle() {
             const provider = new GoogleAuthProvider();
-            signInWithPopup(auth, provider)
-                .then(result => {
-                    const user = result.user;
-                    userName.innerText = `Hello, ${user.displayName}`;
-                    loginButton.style.display = 'none';
-                    logoutButton.style.display = 'block';
-                    uploadSection.style.display = 'block';
-                    fetchImages();  // Fetch images when logged in
-                })
-                .catch(error => {
-                    console.error('Error during sign-in:', error);
-                    alert(`Login failed: ${error.message}`);
-                });
+            try {
+                const result = await signInWithPopup(auth, provider);
+                const user = result.user;
+                userName.innerText = `Hello, ${user.displayName}`;
+                loginButton.style.display = 'none';
+                logoutButton.style.display = 'block';
+                uploadSection.style.display = 'block';
+                fetchImages();  // Fetch images when logged in
+            } catch (error) {
+                console.error('Error during sign-in:', error.message);
+                alert(`Login failed: ${error.message}`);
+            }
         }
 
-        // Sign out
+        // Function to log out
         function logoutUser() {
             firebaseSignOut(auth).then(() => {
                 userName.innerText = 'Not logged in';
