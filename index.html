@@ -40,15 +40,15 @@
     <p id="user-name">Not logged in</p>
     
     <!-- Login Button -->
-    <button id="login-btn" onclick="signInWithGoogle()">Login with Google</button>
+    <button id="login-btn">Login with Google</button>
     
     <!-- Logout Button -->
-    <button id="logout-btn" style="display:none;" onclick="logoutUser()">Logout</button>
+    <button id="logout-btn" style="display:none;">Logout</button>
     
     <!-- Image Upload Section -->
     <div id="upload-section" style="display:none;">
         <input type="file" id="imageInput">
-        <button onclick="uploadImage()">Upload Image</button>
+        <button id="upload-btn">Upload Image</button>
         <div class="progress-bar" id="progress-bar"><div></div></div>
         <div id="output"></div>
     </div>
@@ -64,7 +64,10 @@
         import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
         import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-storage.js";
 
-        const firebaseConfig = {
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-analytics.js";
+
+  const firebaseConfig = {
     apiKey: "AIzaSyADUJRPpBY_INeedjNca4M-rFNCmHg7fS0",
     authDomain: "ramsai-66acc.firebaseapp.com",
     projectId: "ramsai-66acc",
@@ -74,10 +77,11 @@
     measurementId: "G-FECKENWYTH"
   };
 
-  // Initialize Firebase
   
+
+
+        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
         const auth = getAuth(app);
         const storage = getStorage(app);
         const db = getFirestore(app);
@@ -90,23 +94,6 @@ const analytics = getAnalytics(app);
         const output = document.getElementById('output');
         const imagesContainer = document.getElementById('images-container');
         const progressBar = document.getElementById('progress-bar').firstElementChild;
-
-        // Listen for auth state changes to update the UI accordingly
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                userName.innerText = `Hello, ${user.displayName}`;
-                loginButton.style.display = 'none';
-                logoutButton.style.display = 'block';
-                uploadSection.style.display = 'block';
-                fetchImages();  // Fetch images when already logged in
-            } else {
-                userName.innerText = 'Not logged in';
-                loginButton.style.display = 'block';
-                logoutButton.style.display = 'none';
-                uploadSection.style.display = 'none';
-                imagesContainer.innerHTML = '';  // Clear images when logged out
-            }
-        });
 
         // Google sign-in
         function signInWithGoogle() {
@@ -121,7 +108,8 @@ const analytics = getAnalytics(app);
                     fetchImages();  // Fetch images when logged in
                 })
                 .catch(error => {
-                    console.error('Error during sign-in:', error.message);
+                    console.error('Error during sign-in:', error);
+                    alert(`Login failed: ${error.message}`);
                 });
         }
 
@@ -196,10 +184,27 @@ const analytics = getAnalytics(app);
             }
         }
 
-        // Attach functions to the window object
-        window.signInWithGoogle = signInWithGoogle;
-        window.logoutUser = logoutUser;
-        window.uploadImage = uploadImage;
+        // Event listeners for buttons
+        loginButton.addEventListener('click', signInWithGoogle);
+        logoutButton.addEventListener('click', logoutUser);
+        document.getElementById('upload-btn').addEventListener('click', uploadImage);
+
+        // Listen for auth state changes to update the UI accordingly
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                userName.innerText = `Hello, ${user.displayName}`;
+                loginButton.style.display = 'none';
+                logoutButton.style.display = 'block';
+                uploadSection.style.display = 'block';
+                fetchImages();  // Fetch images when already logged in
+            } else {
+                userName.innerText = 'Not logged in';
+                loginButton.style.display = 'block';
+                logoutButton.style.display = 'none';
+                uploadSection.style.display = 'none';
+                imagesContainer.innerHTML = '';  // Clear images when logged out
+            }
+        });
     </script>
 </body>
 </html>
