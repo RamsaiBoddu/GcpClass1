@@ -1,0 +1,72 @@
+<!DOCTYPE html> 
+<html lang="en"> 
+<head> 
+    <meta charset="UTF-8"> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+    <title>Firebase Image Uploader with Google Auth</title> 
+    <style> 
+     body { 
+            font-family: Arial, sans-serif; 
+            text-align: center; 
+            padding: 50px; 
+        } 
+ 
+        #output img { 
+            max-width: 300px; 
+            margin-top: 20px; 
+        } 
+ 
+        .image-container { 
+            display: flex; 
+            flex-wrap: wrap; 
+            justify-content: center; 
+            margin-top: 20px; 
+            gap: 20px; 
+        } 
+ 
+        .image-card { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            border: 1px solid #ccc; 
+            padding: 10px; 
+            border-radius: 8px; 
+            max-width: 200px; 
+        } 
+ 
+        .image-card img { 
+            max-width: 100%; 
+            border-radius: 8px; 
+        } 
+ 
+        .image-card p { 
+            margin-top: 10px; 
+            font-size: 14px; 
+            color: #555; 
+        } 
+    </style> 
+</head> 
+<body> 
+    <h1>Image Uploader with Google Auth</h1> 
+     
+    <div id="user-info"> 
+        <p id="user-name">Not logged in</p> 
+        <button id="login-btn" onclick="signInWithGoogle()">Login with Google</button> 
+        <button id="logout-btn" style="display:none;" onclick="logoutUser()">Logout</button> 
+    </div> 
+ 
+    <div id="upload-section" style="display:none;"> 
+        <input type="file" id="imageInput" accept="image/*"> 
+        <button onclick="uploadImage()">Upload Image</button> 
+    </div> 
+ 
+    <div id="output"></div> 
+ 
+    <div id="images-container" class="image-container"> 
+        <!-- All uploaded images will appear here --> 
+    </div> 
+ 
+ 
+    <script type="module" src="main.js"></script> 
+</body> 
+</html>
