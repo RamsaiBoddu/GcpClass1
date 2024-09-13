@@ -1,206 +1,190 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Firebase Image Upload</title>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-storage.js"></script>
     <style>
-        /* Simple styles for buttons and sections */
-        #login-btn, #logout-btn, #upload-section {
-            margin: 20px;
-        }
-        #images-container div {
-            margin-bottom: 20px;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            max-width: 320px;
-        }
-        #images-container img {
-            display: block;
-            max-width: 100%;
-            margin: 10px 0;
-        }
-        .progress-bar {
-            width: 100%;
-            background-color: #ddd;
-            border-radius: 5px;
-            overflow: hidden;
-            margin-top: 10px;
-        }
-        .progress-bar div {
-            height: 10px;
-            background-color: #4caf50;
-            width: 0%;
-        }
+      * {
+        font-family: "Gill Sans", "Gill Sans MT", Calibri, "Trebuchet MS", sans-serif;
+        font-size: 20px;
+      }
+
+      .inp {
+        display: none;
+      }
+
+      .progressBar {
+        width: 250px;
+        background: rgb(196, 193, 193);
+        padding: 15px 20px;
+        position: relative;
+      }
+
+      .progress {
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(75deg, rgb(11, 65, 173), rgb(179, 10, 165));
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: white;
+      }
+
+      .img {
+        height: 250px;
+        width: 300px;
+        border: 3px solid crimson;
+        object-fit: contain;
+        display: none;
+      }
+
+      .selectImage {
+        background: crimson;
+        color: white;
+        padding: 15px 20px;
+        border-radius: 10px;
+      }
+
+      .upload {
+        background: green;
+        color: white;
+        padding: 15px 20px;
+        border-radius: 10px;
+      }
+
+      button {
+        cursor: pointer;
+        border: none;
+        margin: 10px 0;
+      }
+
+      .filedata {
+        background: cadetblue;
+        padding: 10px 15px;
+        font-size: 14px;
+        max-width: 100px;
+        text-overflow: ellipsis;
+        border-radius: 10px;
+        display: none;
+        overflow: hidden;
+        margin: 10px 0;
+      }
+
+      .imageUpload {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+      }
+
+      body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+      }
+
+      .loading {
+        display: none;
+      }
     </style>
-</head>
-<body>
-    <h1>Firebase Image Upload Example</h1>
-    <p id="user-name">Not logged in</p>
-    
-    <!-- Login Button -->
-    <button id="login-btn">Login with Google</button>
-    
-    <!-- Logout Button -->
-    <button id="logout-btn" style="display:none;">Logout</button>
-    
-    <!-- Image Upload Section -->
-    <div id="upload-section" style="display:none;">
-        <input type="file" id="imageInput">
-        <button id="upload-btn">Upload Image</button>
-        <div class="progress-bar" id="progress-bar"><div></div></div>
-        <div id="output"></div>
+  </head>
+  <body>
+    <div class="imageUpload">
+      <input type="file" class="inp" onchange="getImageData(event)" />
+      <button onclick="selectImage()" class="selectImage">Select Images</button>
+      <span class="filedata"></span>
+      <div class="progressBar">
+        <div class="progress"></div>
+      </div>
+      <button onclick="uploadImage()" class="upload">Upload</button>
+      <span class="loading">Loading...</span>
+      <img class="img" />
     </div>
+    <script>
+const firebaseConfig = {
+  apiKey: "AIzaSyARDLbyGKcZR3-dc-2hsYwArPnWspMmJ3Q",
+  authDomain: "gcpclass2-611d3.firebaseapp.com",
+  projectId: "gcpclass2-611d3",
+  storageBucket: "gcpclass2-611d3.appspot.com",
+  messagingSenderId: "298572994318",
+  appId: "1:298572994318:web:972ee06b1fdd0fe290a95f",
+  measurementId: "G-QFBZ1G8B7X"
+};
 
-    <!-- Images Display Section -->
-    <h2>Uploaded Images</h2>
-    <div id="images-container"></div>
+      const app = firebase.initializeApp(firebaseConfig);
+      const storage = firebase.storage();
 
-    <script type="module">
-        // Import Firebase functions
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
-        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-analytics.js";
-        import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut as firebaseSignOut } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
-        import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-storage.js";
+      const inp = document.querySelector(".inp");
+      const progressbar = document.querySelector(".progress");
+      const img = document.querySelector(".img");
+      const fileData = document.querySelector(".filedata");
+      const loading = document.querySelector(".loading");
+      let file;
+      let fileName;
+      let progress;
+      let isLoading = false;
+      let uploadedFileName;
 
-        // Your web app's Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyADUJRPpBY_INeedjNca4M-rFNCmHg7fS0",
-            authDomain: "ramsai-66acc.firebaseapp.com",
-            projectId: "ramsai-66acc",
-            storageBucket: "ramsai-66acc.appspot.com",
-            messagingSenderId: "251871275778",
-            appId: "1:251871275778:web:2873865ab019707f41b01b",
-            measurementId: "G-FECKENWYTH"
-        };
+      const selectImage = () => {
+        inp.click();
+      };
 
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const analytics = getAnalytics(app);
-        const auth = getAuth(app);
-        const storage = getStorage(app);
-        const db = getFirestore(app);
-
-        const loginButton = document.getElementById('login-btn');
-        const logoutButton = document.getElementById('logout-btn');
-        const userName = document.getElementById('user-name');
-        const uploadSection = document.getElementById('upload-section');
-        const imageInput = document.getElementById('imageInput');
-        const output = document.getElementById('output');
-        const imagesContainer = document.getElementById('images-container');
-        const progressBar = document.getElementById('progress-bar').firstElementChild;
-
-        // Function to sign in with Google
-        async function signInWithGoogle() {
-            const provider = new GoogleAuthProvider();
-            try {
-                const result = await signInWithPopup(auth, provider);
-                const user = result.user;
-                userName.innerText = `Hello, ${user.displayName}`;
-                loginButton.style.display = 'none';
-                logoutButton.style.display = 'block';
-                uploadSection.style.display = 'block';
-                fetchImages();  // Fetch images when logged in
-            } catch (error) {
-                console.error('Error during sign-in:', error.message);
-                alert(`Login failed: ${error.message}`);
-            }
+      const getImageData = (e) => {
+        file = e.target.files[0];
+        fileName = Math.round(Math.random() * 9999) + file.name;
+        if (fileName) {
+          fileData.style.display = "block";
         }
+        fileData.innerHTML = fileName;
+        console.log(file, fileName);
+      };
 
-        // Function to log out
-        function logoutUser() {
-            firebaseSignOut(auth).then(() => {
-                userName.innerText = 'Not logged in';
-                loginButton.style.display = 'block';
-                logoutButton.style.display = 'none';
-                uploadSection.style.display = 'none';
-                imagesContainer.innerHTML = '';  // Clear images when logged out
-            });
-        }
-
-        // Upload image to Firebase Storage and save details to Firestore
-        async function uploadImage() {
-            try {
-                const file = imageInput.files[0];
-                if (!file) {
-                    alert('Please select an image to upload');
-                    return;
+      const uploadImage = () => {
+        loading.style.display = "block";
+        const storageRef = storage.ref().child("myimages");
+        const folderRef = storageRef.child(fileName);
+        const uploadtask = folderRef.put(file);
+        uploadtask.on(
+          "state_changed",
+          (snapshot) => {
+            console.log("Snapshot", snapshot.ref.name);
+            progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            progress = Math.round(progress);
+            progressbar.style.width = progress + "%";
+            progressbar.innerHTML = progress + "%";
+            uploadedFileName = snapshot.ref.name;
+          },
+          (error) => {
+            console.log(error);
+          },
+          () => {
+            storage
+              .ref("myimages")
+              .child(uploadedFileName)
+              .getDownloadURL()
+              .then((url) => {
+                console.log("URL", url);
+                if (!url) {
+                  img.style.display = "none";
+                } else {
+                  img.style.display = "block";
+                  loading.style.display = "none";
                 }
-
-                const storageRef = ref(storage, `images/${file.name}`);
-                const uploadTask = uploadBytesResumable(storageRef, file);
-
-                uploadTask.on('state_changed',
-                    (snapshot) => {
-                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                        progressBar.style.width = progress + '%';
-                    },
-                    (error) => {
-                        console.error('Error uploading image:', error);
-                    },
-                    async () => {
-                        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                        const { uid, displayName } = auth.currentUser;
-
-                        // Save image info in Firestore
-                        await addDoc(collection(db, 'uploadedImages'), {
-                            imageUrl: downloadURL,
-                            userName: displayName,
-                            userId: uid,
-                            timestamp: new Date()
-                        });
-
-                        fetchImages();  // Fetch images after uploading
-                    }
-                );
-            } catch (error) {
-                console.error('Error uploading image:', error);
-            }
-        }
-
-        // Fetch all images from Firestore and display them
-        async function fetchImages() {
-            try {
-                const querySnapshot = await getDocs(collection(db, 'uploadedImages'));
-                imagesContainer.innerHTML = '';  // Clear current images
-
-                querySnapshot.forEach((doc) => {
-                    const imageData = doc.data();
-                    imagesContainer.innerHTML += `
-                        <div>
-                            <p>Uploaded by: ${imageData.userName}</p>
-                            <img src="${imageData.imageUrl}" alt="Uploaded image" />
-                        </div>
-                    `;
-                });
-            } catch (error) {
-                console.error('Error fetching images:', error);
-            }
-        }
-
-        // Event listeners for buttons
-        loginButton.addEventListener('click', signInWithGoogle);
-        logoutButton.addEventListener('click', logoutUser);
-        document.getElementById('upload-btn').addEventListener('click', uploadImage);
-
-        // Listen for auth state changes to update the UI accordingly
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                userName.innerText = `Hello, ${user.displayName}`;
-                loginButton.style.display = 'none';
-                logoutButton.style.display = 'block';
-                uploadSection.style.display = 'block';
-                fetchImages();  // Fetch images when already logged in
-            } else {
-                userName.innerText = 'Not logged in';
-                loginButton.style.display = 'block';
-                logoutButton.style.display = 'none';
-                uploadSection.style.display = 'none';
-                imagesContainer.innerHTML = '';  // Clear images when logged out
-            }
-        });
+                img.setAttribute("src", url);
+              });
+            console.log("File Uploaded Successfully");
+          }
+        );
+      };
     </script>
-</body>
+  </body>
 </html>
